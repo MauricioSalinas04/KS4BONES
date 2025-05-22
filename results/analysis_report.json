@@ -1,0 +1,168 @@
+{
+  "analysis_id": "OST_20250521_230024",
+  "timestamp": "2025-05-21T23:00:24.302955",
+  "version": "1.0.0",
+  "images": {
+    "normal": "data/normal_xray.jpg",
+    "test": "data/test_xray.jpg"
+  },
+  "patient_info": {
+    "id": "P12345",
+    "age": 65,
+    "gender": "F",
+    "study_date": "2025-05-21"
+  },
+  "analysis_parameters": {
+    "weights": {
+      "density_global": 0.3,
+      "density_regional": 0.2,
+      "structural": 0.5
+    },
+    "preprocessing": "Adaptive histogram equalization + trabecular enhancement"
+  },
+  "results": {
+    "preprocessing": {
+      "normal_bone_pixels": 614536,
+      "test_bone_pixels": 747901,
+      "bone_coverage_normal": 0.3911466640867563,
+      "bone_coverage_test": 0.476032293009928
+    },
+    "global_ks": {
+      "distance": 0.09348363294026185,
+      "p_value": 0.0,
+      "significant": true,
+      "mean_density_normal": 12.368227410599216,
+      "mean_density_test": 11.473839452013033
+    },
+    "regional_ks": {
+      "regions_analyzed": 11,
+      "regions_significant": 11,
+      "max_distance": 0.4540444042141259,
+      "mean_distance": 0.11819117954944139,
+      "heterogeneity_score": 0.11086468456149044,
+      "significant_regions_coords": [
+        [
+          0,
+          369,
+          0,
+          265
+        ],
+        [
+          0,
+          369,
+          265,
+          530
+        ],
+        [
+          0,
+          369,
+          530,
+          795
+        ],
+        [
+          369,
+          738,
+          265,
+          530
+        ],
+        [
+          369,
+          738,
+          530,
+          795
+        ],
+        [
+          369,
+          738,
+          795,
+          1060
+        ],
+        [
+          738,
+          1107,
+          265,
+          530
+        ],
+        [
+          738,
+          1107,
+          530,
+          795
+        ],
+        [
+          738,
+          1107,
+          795,
+          1060
+        ],
+        [
+          1107,
+          1476,
+          265,
+          530
+        ],
+        [
+          1107,
+          1476,
+          530,
+          795
+        ]
+      ]
+    },
+    "structural": {
+      "normal_features": {
+        "contrast": 0.01928553524777664,
+        "homogeneity": 0.992957607386526,
+        "energy": 0.985996867003822,
+        "correlation": 0.15040589077344638,
+        "fractal_dimension": 1.9351824771375994,
+        "skeleton_density": 0.03126586562870198,
+        "anisotropy": 0.754332258103503,
+        "spatial_heterogeneity": 7.492194366878603
+      },
+      "test_features": {
+        "contrast": 0.010276187084013743,
+        "homogeneity": 0.9958766043410825,
+        "energy": 0.9916904387623082,
+        "correlation": 0.12385602524036278,
+        "fractal_dimension": 1.9290311530085462,
+        "skeleton_density": 0.03333863706560093,
+        "anisotropy": 0.7697821328868212,
+        "spatial_heterogeneity": 5.648004593350214
+      },
+      "changes": {
+        "contrast_change": 0.4671557230853394,
+        "homogeneity_change": 0.0029396994724067513,
+        "energy_change": 0.005774431896307538,
+        "correlation_change": 0.1765214473751907,
+        "fractal_dimension_change": 0.0031786791177190812,
+        "skeleton_density_change": 0.06629502798720371,
+        "anisotropy_change": 0.020481524709232656,
+        "spatial_heterogeneity_change": 0.2461481487561454
+      }
+    },
+    "composite_score": {
+      "score": 0.14790198603889204,
+      "confidence": 1.0,
+      "components": {
+        "density_global": 0.1869672658805237,
+        "density_regional": 0.11086468456149044,
+        "structural": 0.13927773872487373
+      },
+      "interpretation": "Normal - No evidencia radiográfica de osteoporosis",
+      "recommendation": "Seguimiento rutinario según protocolo institucional."
+    }
+  },
+  "summary": {
+    "final_score": 0.14790198603889204,
+    "confidence": 1.0,
+    "interpretation": "Normal - No evidencia radiográfica de osteoporosis",
+    "recommendation": "Seguimiento rutinario según protocolo institucional."
+  },
+  "quality_metrics": {
+    "normal_bone_coverage": 0.3911466640867563,
+    "test_bone_coverage": 0.476032293009928,
+    "regions_analyzed": 11,
+    "structural_features_extracted": 8
+  }
+}
