@@ -1,6 +1,6 @@
 # Informe de Verificación de Preprocesamiento
 
-Fecha: 2025-05-22 12:12:55
+Fecha: 2025-05-22 14:30:27
 
 ## Resumen de Calidad
 
@@ -8,7 +8,7 @@ Fecha: 2025-05-22 12:12:55
 
 | Métrica | Valor | Rango Esperado | Estado |
 |---------|--------|----------------|--------|
-| min | 0.000 | No definido | ➖ |
+| min | 0.000 | 0 | ✅ |
 | max | 255.000 | 255 | ✅ |
 | mean | 56.086 | 50.00 - 200.00 | ✅ |
 | std | 50.502 | 20.00 - 80.00 | ✅ |
@@ -24,21 +24,21 @@ Fecha: 2025-05-22 12:12:55
 
 | Métrica | Valor | Rango Esperado | Estado |
 |---------|--------|----------------|--------|
-| edge_strength | 0.012 | 10.00 - 50.00 | ❌ |
-| texture_variance | 71.021 | 500.00 - 5000.00 | ❌ |
+| edge_strength | 0.058 | 10.00 - 50.00 | ❌ |
+| texture_variance | 726.353 | 500.00 - 5000.00 | ✅ |
 
 ## Segmentation
 
 | Métrica | Valor | Rango Esperado | Estado |
 |---------|--------|----------------|--------|
-| bone_coverage | 0.476 | 0.10 - 0.50 | ✅ |
-| connected_components | 16.000 | 1.00 - 20.00 | ✅ |
+| bone_coverage | 0.252 | 0.10 - 0.50 | ✅ |
+| connected_components | 2.000 | 1.00 - 20.00 | ✅ |
 
 
 ## Score de Calidad Global
 
-- Checks pasados: 6/9
-- Score de calidad: 66.7%
+- Checks pasados: 8/10
+- Score de calidad: 80.0%
 
 ## Imágenes Generadas
 

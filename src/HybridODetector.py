@@ -40,129 +40,108 @@ class HybridOsteoporosisDetector:
         total_weight = sum(self.weights.values())
         if abs(total_weight - 1.0) > 0.01:
             raise ValueError(f"Los pesos deben sumar 1.0, actual: {total_weight}")
+
     
-    def verify_preprocessing(self, image: np.ndarray, output_dir: str) -> Dict:
+    def preprocess_xray(self, image: np.ndarray, verify: bool = False, output_dir: str = None) -> Tuple[np.ndarray, np.ndarray, Optional[Dict]]:
         """
-        Verifica y exporta cada fase del preprocesamiento
-
+        Pre-procesamiento de imagen con verificación opcional integrada
+        
         Args:
-            image: Imagen original en escala de grises
-            output_dir: Directorio donde guardar las imágenes
-
+            image: Imagen de entrada en escala de grises
+            verify: Si es True, genera métricas y exporta resultados
+            output_dir: Directorio para guardar resultados de verificación
+            
         Returns:
-            Dict con métricas de calidad de cada fase
+            Tuple con (imagen procesada, máscara de hueso, métricas opcionales)
         """
-        os.makedirs(output_dir, exist_ok=True)
-        metrics = {}
+        # Inicializar métricas si verify es True
+        metrics = {} if verify else None
+        if verify and output_dir is None:
+            output_dir = 'preprocessing_verification'
+            os.makedirs(output_dir, exist_ok=True)
 
         # 1. Normalización de intensidades
-        normalized = ((image - image.min()) / (image.max() - image.min()) * 255).astype(np.uint8)
-        cv2.imwrite(os.path.join(output_dir, '1_normalized.png'), normalized)
-        metrics['normalization'] = {
-            'min': float(normalized.min()),
-            'max': float(normalized.max()),
-            'mean': float(normalized.mean()),
-            'std': float(normalized.std())
-        }
+        if image.dtype != np.uint8:
+            normalized = self.normalize_image(image, clip_percentile=1.0)
+        else:
+            normalized = image.copy()
+        
+        if verify:
+            cv2.imwrite(os.path.join(output_dir, '1_normalized.png'), normalized)
+            metrics['normalization'] = {
+                'min': float(normalized.min()),
+                'max': float(normalized.max()),
+                'mean': float(normalized.mean()),
+                'std': float(normalized.std())
+            }
 
         # 2. Ecualización adaptativa
         equalized = equalize_adapthist(normalized, clip_limit=0.03)
         equalized = (equalized * 255).astype(np.uint8)
-        cv2.imwrite(os.path.join(output_dir, '2_equalized.png'), equalized)
-        metrics['equalization'] = {
-            'contrast': float(np.std(equalized)),
-            'histogram_uniformity': float(np.histogram(equalized, bins=256)[0].std())
-        }
+        
+        if verify:
+            cv2.imwrite(os.path.join(output_dir, '2_equalized.png'), equalized)
+            metrics['equalization'] = {
+                'contrast': float(np.std(equalized)),
+                'histogram_uniformity': float(np.histogram(equalized, bins=256)[0].std())
+            }
 
         # 3. Realce trabecular
         enhanced = self.enhance_trabecular_pattern(equalized)
-        cv2.imwrite(os.path.join(output_dir, '3_enhanced.png'), enhanced)
-        metrics['enhancement'] = {
-            'edge_strength': float(np.mean(filters.sobel(enhanced))),
-            'texture_variance': float(np.var(enhanced))
-        }
-
-        # 4. Segmentación ósea
-        bone_mask = self.segment_bone_tissue(equalized)
-        cv2.imwrite(os.path.join(output_dir, '4_bone_mask.png'), bone_mask * 255)
-        metrics['segmentation'] = {
-            'bone_coverage': float(np.mean(bone_mask)),
-            'connected_components': int(measure.label(bone_mask).max())
-        }
-
-        # Imagen final procesada
-        final = enhanced * bone_mask
-        cv2.imwrite(os.path.join(output_dir, '5_final.png'), final)
-
-        # Agregar rangos aceptables para verificación
-        metrics['quality_thresholds'] = {
-            'normalization': {
-                'min': 0,
-                'max': 255,
-                'mean': (50, 200),
-                'std': (20, 80)
-            },
-            'equalization': {
-                'contrast': (30, 100),
-                'histogram_uniformity': (100, 2000)
-            },
-            'enhancement': {
-                'edge_strength': (10, 50),
-                'texture_variance': (500, 5000)
-            },
-            'segmentation': {
-                'bone_coverage': (0.1, 0.5),
-                'connected_components': (1, 20)
-            }
-        }
-
-        # Generar informe usando la función de utilities
-        generate_preprocessing_report(metrics, output_dir)
-    
-        return metrics
-
-    # Modificar el método preprocess_xray para incluir verificación opcional
-    def preprocess_xray(self, image: np.ndarray, verify: bool = False, output_dir: str = None) -> Tuple[np.ndarray, np.ndarray]:
-        """
-        Pre-procesamiento específico para análisis óseo con verificación opcional
         
-        Args:
-            image: Imagen de entrada en escala de grises
-            verify: Si es True, realiza verificación y exporta resultados
-            output_dir: Directorio para guardar resultados de verificación
-            
-        Returns:
-            Tuple con (imagen procesada, máscara de hueso)
-        """
         if verify:
-            if output_dir is None:
-                output_dir = 'preprocessing_verification'
-            metrics = self.verify_preprocessing(image, output_dir)
-            print("Métricas de preprocesamiento guardadas en:", output_dir)
-            print(json.dumps(metrics, indent=2))
+            cv2.imwrite(os.path.join(output_dir, '3_enhanced.png'), enhanced)
+            metrics['enhancement'] = {
+                'edge_strength': float(np.mean(filters.sobel(enhanced))),
+                'texture_variance': float(np.var(enhanced))
+            }
 
-        # Normalizar intensidades
-        if image.dtype != np.uint8:
-            image = ((image - image.min()) / (image.max() - image.min()) * 255).astype(np.uint8)
+        # 4. Segmentación básica de hueso
+        bone_mask = self.segment_bone_tissue(equalized)
         
-        # 1. Ecualización adaptativa del histograma
-        image_eq = equalize_adapthist(image, clip_limit=0.03)
-        image_eq = (image_eq * 255).astype(np.uint8)
-        
-        # 2. Realce de estructura trabecular
-        enhanced = self.enhance_trabecular_pattern(image_eq)
-        
-        # 3. Segmentación básica de hueso
-        bone_mask = self.segment_bone_tissue(image_eq)
-        
-        # 4. Aplicar máscara
+        if verify:
+            cv2.imwrite(os.path.join(output_dir, '4_bone_mask.png'), bone_mask * 255)
+            metrics['segmentation'] = {
+                'bone_coverage': float(np.mean(bone_mask)),
+                'connected_components': int(measure.label(bone_mask).max())
+            }
+
+        # 5. Imagen final procesada
         processed_image = enhanced * bone_mask
         
+        if verify:
+            cv2.imwrite(os.path.join(output_dir, '5_final.png'), processed_image)
+            
+            # Agregar rangos aceptables para verificación
+            metrics['quality_thresholds'] = {
+                'normalization': {
+                    'min': 0,
+                    'max': 255,
+                    'mean': (50, 200),
+                    'std': (20, 80)
+                },
+                'equalization': {
+                    'contrast': (30, 100),
+                    'histogram_uniformity': (100, 2000)
+                },
+                'enhancement': {
+                    'edge_strength': (10, 50),
+                    'texture_variance': (500, 5000)
+                },
+                'segmentation': {
+                    'bone_coverage': (0.1, 0.5),
+                    'connected_components': (1, 20)
+                }
+            }
+            
+            # Generar informe
+            generate_preprocessing_report(metrics, output_dir)
+
         return processed_image, bone_mask
     
     def enhance_trabecular_pattern(self, image: np.ndarray) -> np.ndarray:
         """
-        Realza el patrón trabecular usando filtros multi-escala
+        Realza el patrón trabecular usando un enfoque multi-escala mejorado
         
         Args:
             image: Imagen en escala de grises
@@ -170,48 +149,67 @@ class HybridOsteoporosisDetector:
         Returns:
             Imagen con estructura trabecular realzada
         """
-        # 1. Normalizar a rango [0,1]
-        image_normalized = image.astype(np.float64) / 255.0
+        # 1. Normalización inicial
+        image_float = image.astype(np.float64) / 255.0
         
-        # 2. Mejora de contraste local
-        enhanced = exposure.equalize_adapthist(image_normalized, clip_limit=0.03)
+        # 2. Descomposición multi-escala
+        scales = [0.5, 1.0, 2.0]
+        enhanced = np.zeros_like(image_float)
         
-        # 3. Filtro Frangi modificado
-        vessel_like = np.zeros_like(enhanced)
-        for sigma in [1.0, 2.0, 3.0]:
+        for scale in scales:
+            # 2.1 Mejora de contraste local adaptativo
+            adapted = exposure.equalize_adapthist(image_float, 
+                                                clip_limit=0.03,
+                                                kernel_size=int(image.shape[0]/8))
+            
+            # 2.2 Filtro Frangi modificado para cada escala
             try:
-                frangi_filtered = frangi(
-                    enhanced,
-                    sigmas=[sigma],
-                    beta=0.5,
-                    gamma=15,
-                    black_ridges=False
-                )
-                vessel_like += frangi_filtered
+                vesselness = frangi(adapted,
+                                  sigmas=[scale],
+                                  beta=0.5,
+                                  gamma=15,
+                                  black_ridges=False)
+                enhanced += vesselness
             except:
                 continue
                 
-        # 4. Normalización y ajuste de contraste
-        if vessel_like.max() > vessel_like.min():
-            # Normalizar a [0,255]
-            enhanced = ((vessel_like - vessel_like.min()) / 
-                       (vessel_like.max() - vessel_like.min()) * 255)
-            enhanced = enhanced.astype(np.uint8)
+        # 3. Combinar resultados
+        if enhanced.max() > enhanced.min():
+            # 3.1 Normalización del resultado combinado
+            enhanced = (enhanced - enhanced.min()) / (enhanced.max() - enhanced.min())
             
-            # Mejora adicional de contraste
-            enhanced = cv2.convertScaleAbs(enhanced, alpha=1.5, beta=10)
+            # 3.2 Mejora de contraste no lineal
+            enhanced = exposure.adjust_gamma(enhanced, 0.8)  # Ajuste gamma para realzar detalles
+            
+            # 3.3 Filtro de realce de bordes adaptativo
+            kernel_size = max(3, int(min(image.shape) / 100))
+            if kernel_size % 2 == 0:
+                kernel_size += 1
+            enhanced = filters.unsharp_mask(enhanced, 
+                                          radius=kernel_size,
+                                          amount=2.0)
+            
+            # 3.4 Conversión final a uint8 con rango completo
+            enhanced = (enhanced * 255).astype(np.uint8)
+            
+            # 3.5 Mejora final de contraste local
+            clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+            enhanced = clahe.apply(enhanced)
+            
         else:
-            # Si el realce falla, devolver imagen original mejorada
-            enhanced = cv2.convertScaleAbs(image, alpha=1.2, beta=10)
+            # Fallback mejorado si el realce falla
+            enhanced = cv2.convertScaleAbs(image, alpha=1.3, beta=5)
+            enhanced = clahe.apply(enhanced)
         
-        # 5. Filtro de suavizado para reducir ruido
-        enhanced = cv2.GaussianBlur(enhanced, (3,3), 0.5)
+        # 4. Preservación de detalles finos
+        detail_layer = cv2.subtract(image, cv2.GaussianBlur(image, (5,5), 0))
+        enhanced = cv2.addWeighted(enhanced, 0.8, detail_layer, 0.2, 0)
         
         return enhanced
     
     def segment_bone_tissue(self, image: np.ndarray) -> np.ndarray:
         """
-        Segmentación básica para separar hueso de tejido blando
+        Segmentación mejorada para separar hueso de tejido blando
         
         Args:
             image: Imagen en escala de grises
@@ -219,15 +217,66 @@ class HybridOsteoporosisDetector:
         Returns:
             Máscara binaria del hueso
         """
-        # Threshold adaptativo
-        threshold = threshold_otsu(image)
-        bone_mask = image > threshold * 0.7  # Más permisivo para capturar hueso trabecular
+        # 1. Pre-procesamiento para reducir ruido
+        denoised = cv2.GaussianBlur(image, (5,5), 0)
         
-        # Operaciones morfológicas para limpiar
-        bone_mask = morphology.remove_small_objects(bone_mask, min_size=100)
-        bone_mask = morphology.binary_closing(bone_mask, morphology.disk(2))
+        # 2. Threshold adaptativo multi-nivel
+        thresh_otsu = threshold_otsu(denoised)
+        thresh_local = filters.threshold_local(denoised, block_size=35, method='gaussian')
+        
+        # 3. Combinar thresholds
+        bone_mask = (denoised > thresh_otsu * 0.8) & (denoised > thresh_local)
+        
+        # 4. Operaciones morfológicas mejoradas
+        # 4.1 Eliminar objetos pequeños (ruido)
+        bone_mask = morphology.remove_small_objects(bone_mask, min_size=200)
+        
+        # 4.2 Cerrar gaps pequeños
+        bone_mask = morphology.binary_closing(bone_mask, morphology.disk(3))
+        
+        # 4.3 Eliminar objetos periféricos (probablemente no son hueso)
+        labels = measure.label(bone_mask)
+        regions = measure.regionprops(labels)
+        
+        # Filtrar por área y solidity
+        valid_labels = []
+        for region in regions:
+            area_ratio = region.area / bone_mask.size
+            if (0.01 < area_ratio < 0.5) and (region.solidity > 0.3):
+                valid_labels.append(region.label)
+        
+        # 5. Mantener solo regiones válidas
+        bone_mask = np.isin(labels, valid_labels)
+        
+        # 6. Suavizado final de bordes
+        bone_mask = morphology.binary_dilation(bone_mask, morphology.disk(1))
+        bone_mask = morphology.binary_erosion(bone_mask, morphology.disk(1))
         
         return bone_mask.astype(np.uint8)
+    
+    def normalize_image(self, image: np.ndarray, clip_percentile: float = 1.0) -> np.ndarray:
+        """
+        Normalización robusta de imagen con clipping opcional
+
+        Args:
+            image: Imagen de entrada
+            clip_percentile: Percentil para recortar outliers (1.0 = sin recorte)
+
+        Returns:
+            Imagen normalizada
+        """
+        # Recortar outliers si es necesario
+        if clip_percentile < 100:
+            p_low, p_high = np.percentile(image, [clip_percentile, 100-clip_percentile])
+            image_clipped = np.clip(image, p_low, p_high)
+        else:
+            image_clipped = image
+
+        # Normalización
+        normalized = ((image_clipped - image_clipped.min()) / 
+                     (image_clipped.max() - image_clipped.min()) * 255)
+
+        return normalized.astype(np.uint8)
     
     def multi_regional_ks_analysis(self, image1: np.ndarray, image2: np.ndarray, 
                                  grid_size: Tuple[int, int] = (4, 4)) -> List[Dict]:
@@ -487,8 +536,8 @@ class HybridOsteoporosisDetector:
             Diccionario con resultados completos del análisis
         """
         # Pre-procesamiento
-        normal_processed, normal_mask = self.preprocess_xray(normal_xray)
-        test_processed, test_mask = self.preprocess_xray(test_xray)
+        normal_processed, normal_mask = self.preprocess_xray(normal_xray, verify=True, output_dir="verification/normal")
+        test_processed, test_mask = self.preprocess_xray(test_xray, verify=True, output_dir="verification/test")
         
         results = {
             'preprocessing': {

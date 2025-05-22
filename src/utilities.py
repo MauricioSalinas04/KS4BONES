@@ -59,10 +59,11 @@ def generate_preprocessing_report(metrics: Dict, output_dir: str) -> None:
                 f.write('| Métrica | Valor | Rango Esperado | Estado |\n')
                 f.write('|---------|--------|----------------|--------|\n')
                 
+                # Modificar la sección de verificación de threshold:
                 thresholds = metrics['quality_thresholds'][phase]
                 for metric, value in values.items():
                     threshold = thresholds.get(metric, None)
-                    if threshold:
+                    if threshold is not None:  # Cambio aquí
                         total_checks += 1
                         if isinstance(threshold, tuple):
                             status = '✅' if threshold[0] <= value <= threshold[1] else '❌'
@@ -74,7 +75,7 @@ def generate_preprocessing_report(metrics: Dict, output_dir: str) -> None:
                             range_str = f'{threshold}'
                             if value == threshold:
                                 passed_checks += 1
-                    else:
+                    else:  # threshold is None
                         status = '➖'
                         range_str = 'No definido'
                     

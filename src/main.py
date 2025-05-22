@@ -16,19 +16,6 @@ def main_example():
         normal_image = load_image("data/normal_xray.jpg")
         test_image = load_image("data/test_xray.jpg")
 
-        # Verificar preprocesamiento
-        normal_processed, normal_mask = detector.preprocess_xray(
-            normal_image, 
-            verify=True, 
-            output_dir="verification/normal"
-        )
-        
-        test_processed, test_mask = detector.preprocess_xray(
-            test_image,
-            verify=True,
-            output_dir="verification/test"
-        )
-
         # Información del paciente de ejemplo
         patient_info = {
             "id": "P12345",

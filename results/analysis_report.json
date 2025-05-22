@@ -1,6 +1,6 @@
 {
-  "analysis_id": "OST_20250522_121314",
-  "timestamp": "2025-05-22T12:13:14.887982",
+  "analysis_id": "OST_20250522_143032",
+  "timestamp": "2025-05-22T14:30:32.449275",
   "version": "1.0.0",
   "images": {
     "normal": "data/normal_xray.jpg",
@@ -22,34 +22,28 @@
   },
   "results": {
     "preprocessing": {
-      "normal_bone_pixels": 614536,
-      "test_bone_pixels": 747901,
-      "bone_coverage_normal": 0.3911466640867563,
-      "bone_coverage_test": 0.476032293009928
+      "normal_bone_pixels": 350888,
+      "test_bone_pixels": 395973,
+      "bone_coverage_normal": 0.22333707165743544,
+      "bone_coverage_test": 0.2520332706601813
     },
     "global_ks": {
-      "distance": 0.09348363294026185,
-      "p_value": 0.0,
+      "distance": 0.027787038774368944,
+      "p_value": 3.2100089481035816e-125,
       "significant": true,
-      "mean_density_normal": 12.368227410599216,
-      "mean_density_test": 11.473839452013033
+      "mean_density_normal": 15.200286131187159,
+      "mean_density_test": 13.808504620264513
     },
     "regional_ks": {
-      "regions_analyzed": 11,
-      "regions_significant": 11,
-      "max_distance": 0.4540444042141259,
-      "mean_distance": 0.11819117954944139,
-      "heterogeneity_score": 0.11086468456149044,
+      "regions_analyzed": 9,
+      "regions_significant": 8,
+      "max_distance": 0.06609825998223762,
+      "mean_distance": 0.033566946825209526,
+      "heterogeneity_score": 0.014296047234626883,
       "significant_regions_coords": [
         [
           0,
           369,
-          0,
-          265
-        ],
-        [
-          0,
-          369,
           265,
           530
         ],
@@ -72,12 +66,6 @@
           795
         ],
         [
-          369,
-          738,
-          795,
-          1060
-        ],
-        [
           738,
           1107,
           265,
@@ -88,12 +76,6 @@
           1107,
           530,
           795
-        ],
-        [
-          738,
-          1107,
-          795,
-          1060
         ],
         [
           1107,
@@ -111,58 +93,58 @@
     },
     "structural": {
       "normal_features": {
-        "contrast": 0.01928553524777664,
-        "homogeneity": 0.992957607386526,
-        "energy": 0.985996867003822,
-        "correlation": 0.15040589077344638,
-        "fractal_dimension": 1.9351824771375994,
-        "skeleton_density": 0.03126586562870198,
-        "anisotropy": 0.754332258103503,
-        "spatial_heterogeneity": 7.492194366878603
+        "contrast": 0.14574333194055983,
+        "homogeneity": 0.9654943670668086,
+        "energy": 0.9382909079401907,
+        "correlation": 0.20209706951981632,
+        "fractal_dimension": 1.4325628059668267,
+        "skeleton_density": 0.5105652260361875,
+        "anisotropy": 0.7353561474789143,
+        "spatial_heterogeneity": 8.954591592592237
       },
       "test_features": {
-        "contrast": 0.010276187084013743,
-        "homogeneity": 0.9958766043410825,
-        "energy": 0.9916904387623082,
-        "correlation": 0.12385602524036278,
-        "fractal_dimension": 1.9290311530085462,
-        "skeleton_density": 0.03333863706560093,
-        "anisotropy": 0.7697821328868212,
-        "spatial_heterogeneity": 5.648004593350214
+        "contrast": 0.14483637117034953,
+        "homogeneity": 0.9658128338546939,
+        "energy": 0.9391391787001653,
+        "correlation": 0.1993526620565947,
+        "fractal_dimension": 1.40853841977336,
+        "skeleton_density": 0.5112466437881186,
+        "anisotropy": 0.7322407877197272,
+        "spatial_heterogeneity": 8.474969978111785
       },
       "changes": {
-        "contrast_change": 0.4671557230853394,
-        "homogeneity_change": 0.0029396994724067513,
-        "energy_change": 0.005774431896307538,
-        "correlation_change": 0.1765214473751907,
-        "fractal_dimension_change": 0.0031786791177190812,
-        "skeleton_density_change": 0.06629502798720371,
-        "anisotropy_change": 0.020481524709232656,
-        "spatial_heterogeneity_change": 0.2461481487561454
+        "contrast_change": 0.0062230001066545726,
+        "homogeneity_change": 0.0003298484162603484,
+        "energy_change": 0.0009040594476576707,
+        "correlation_change": 0.013579649965941408,
+        "fractal_dimension_change": 0.016770214955603928,
+        "skeleton_density_change": 0.0013346340823509068,
+        "anisotropy_change": 0.004236531876244927,
+        "spatial_heterogeneity_change": 0.053561528688502474
       }
     },
     "composite_score": {
-      "score": 0.14790198603889204,
+      "score": 0.023101980339153533,
       "confidence": 1.0,
       "components": {
-        "density_global": 0.1869672658805237,
-        "density_regional": 0.11086468456149044,
-        "structural": 0.13927773872487373
+        "density_global": 0.05557407754873789,
+        "density_regional": 0.014296047234626883,
+        "structural": 0.007141095255213583
       },
       "interpretation": "Normal - No evidencia radiográfica de osteoporosis",
       "recommendation": "Seguimiento rutinario según protocolo institucional."
     }
   },
   "summary": {
-    "final_score": 0.14790198603889204,
+    "final_score": 0.023101980339153533,
     "confidence": 1.0,
     "interpretation": "Normal - No evidencia radiográfica de osteoporosis",
     "recommendation": "Seguimiento rutinario según protocolo institucional."
   },
   "quality_metrics": {
-    "normal_bone_coverage": 0.3911466640867563,
-    "test_bone_coverage": 0.476032293009928,
-    "regions_analyzed": 11,
+    "normal_bone_coverage": 0.22333707165743544,
+    "test_bone_coverage": 0.2520332706601813,
+    "regions_analyzed": 9,
     "structural_features_extracted": 8
   }
 }
