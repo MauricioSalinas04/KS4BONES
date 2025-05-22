@@ -578,6 +578,7 @@ class HybridOsteoporosisDetector:
             regional_results = self.multi_regional_ks_analysis(normal_processed, test_processed)
             
             if regional_results:
+
                 significant_regions = [r for r in regional_results if r['p_value'] < 0.05]
                 ks_distances = [r['ks_distance'] for r in regional_results]
                 
@@ -589,6 +590,18 @@ class HybridOsteoporosisDetector:
                     'heterogeneity_score': float(np.std(ks_distances)) if len(ks_distances) > 1 else 0.0,
                     'significant_regions_coords': [r['coordinates'] for r in significant_regions]
                 }
+                
+                # Generar visualización
+                self.visualize_regional_analysis(
+                    normal_processed, 
+                    regional_results,
+                    "verification/normal/regional_analysis.png"
+                )
+                self.visualize_regional_analysis(
+                    test_processed,
+                    regional_results,
+                    "verification/test/regional_analysis.png"
+                )
             else:
                 results['regional_ks'] = {
                     'regions_analyzed': 0,
@@ -813,3 +826,43 @@ class HybridOsteoporosisDetector:
         }
         
         return report
+    
+    def visualize_regional_analysis(self, image: np.ndarray, regional_results: List[Dict], 
+                              output_path: str = "regional_analysis.png") -> None:
+        """
+        Visualiza los resultados del análisis regional KS
+        
+        Args:
+            image: Imagen original
+            regional_results: Resultados del análisis regional
+            output_path: Ruta para guardar la visualización
+        """
+        # Crear una copia de la imagen para visualización
+        vis_image = cv2.cvtColor(image.astype(np.uint8), cv2.COLOR_GRAY2BGR)
+        h, w = image.shape
+        grid_size = (4, 4)  # Tamaño de grilla estándar
+        step_h, step_w = h // grid_size[0], w // grid_size[1]
+        
+        # Dibujar grid y valores
+        for result in regional_results:
+            i, j = result['region']
+            start_h, end_h, start_w, end_w = result['coordinates']
+            
+            # Color basado en significancia (p-value < 0.05)
+            color = (0, 0, 255) if result['p_value'] < 0.05 else (0, 255, 0)
+            
+            # Dibujar rectángulo
+            cv2.rectangle(vis_image, (start_w, start_h), (end_w, end_h), color, 2)
+            
+            # Añadir texto con valores
+            text_pos = (start_w + 5, start_h + 20)
+            ks_value = f"KS: {result['ks_distance']:.3f}"
+            p_value = f"p: {result['p_value']:.3f}"
+            
+            cv2.putText(vis_image, ks_value, text_pos, 
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255,255,255), 1)
+            cv2.putText(vis_image, p_value, (text_pos[0], text_pos[1] + 15),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255,255,255), 1)
+        
+        # Guardar visualización
+        cv2.imwrite(output_path, vis_image)
