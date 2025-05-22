@@ -14,6 +14,8 @@ from typing import Dict, List, Tuple, Optional
 import warnings
 import os
 
+from utilities import generate_preprocessing_report
+
 warnings.filterwarnings('ignore')
 
 class HybridOsteoporosisDetector:
@@ -114,6 +116,9 @@ class HybridOsteoporosisDetector:
             }
         }
 
+        # Generar informe usando la función de utilities
+        generate_preprocessing_report(metrics, output_dir)
+    
         return metrics
 
     # Modificar el método preprocess_xray para incluir verificación opcional
