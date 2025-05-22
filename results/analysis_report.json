@@ -1,6 +1,6 @@
 {
-  "analysis_id": "OST_20250521_230024",
-  "timestamp": "2025-05-21T23:00:24.302955",
+  "analysis_id": "OST_20250522_113939",
+  "timestamp": "2025-05-22T11:39:39.756474",
   "version": "1.0.0",
   "images": {
     "normal": "data/normal_xray.jpg",
@@ -10,7 +10,7 @@
     "id": "P12345",
     "age": 65,
     "gender": "F",
-    "study_date": "2025-05-21"
+    "study_date": "2025-05-22"
   },
   "analysis_parameters": {
     "weights": {
