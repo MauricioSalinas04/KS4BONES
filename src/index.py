@@ -5,6 +5,11 @@ from PIL import Image, ImageTk
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import scipy.stats as stats
+from datetime import datetime
+
+# Importar HybridOsteoporosisDetector
+from HybridODetector import HybridOsteoporosisDetector
+from utilities import save_report
 
 class KSImageCompareApp:
     def __init__(self, root):
@@ -121,11 +126,19 @@ class KSImageCompareApp:
         label.config(text=title, compound=tk.TOP)
     
     def run_ks_test(self):
-        if self.image1_gray is None or self.image2_gray is None:
-            messagebox.showwarning("Advertencia", "Por favor cargue ambas imágenes primero")
-            return
-        
+        # Inicializar detector
+        detector = HybridOsteoporosisDetector()
+
         try:
+
+            # Información del paciente de ejemplo
+            patient_info = {
+                "id": "P12345",
+                "age": 65,
+                "gender": "F",
+                "study_date": datetime.now().strftime("%Y-%m-%d")
+            }
+
             # Obtener arrays de píxeles
             pixels1 = np.array(self.image1_gray).flatten()
             pixels2 = np.array(self.image2_gray).flatten()
@@ -137,10 +150,25 @@ class KSImageCompareApp:
             # Calcular CDFs
             cdf1 = np.cumsum(hist1)
             cdf2 = np.cumsum(hist2)
-            
+
+            # Realizar análisis
+            results = detector.analyze_pair(self.image1_gray, self.image2_gray)
+
             # Calcular estadístico KS
-            ks_statistic, p_value = stats.ks_2samp(pixels1, pixels2)
-            
+            ks_statistic = results['global_ks']['distance']  # Distancia KS
+            p_value = results['global_ks']['p_value']      # Valor p
+
+            # Generar reporte
+            report = detector.generate_report(
+                results, 
+                normal_image_path="data/normal_xray.jpg",
+                test_image_path="data/test_xray.jpg",
+                patient_info=patient_info
+            )
+
+            # Guardar reporte
+            save_report(report, "results/analysis_report.json")
+
             # Actualizar gráficos
             self.update_plots(cdf1, cdf2, bins)
             
