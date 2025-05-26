@@ -34,37 +34,31 @@ class ParametrosTejido:
 def obtener_parametros_tejido(tipo: TipoTejido) -> ParametrosTejido:
     """
     Retorna los parámetros específicos para cada tipo de tejido.
-    
-    Args:
-        tipo: Tipo de tejido óseo
-        
-    Returns:
-        Objeto ParametrosTejido con los valores correspondientes
     """
     parametros = {
         TipoTejido.NORMAL: ParametrosTejido(
-            densidad_base=0.85,
-            rugosidad=0.3,
-            conectividad=0.8,
-            porosidad=0.2,
+            densidad_base=0.9,
+            rugosidad=0.2,
+            conectividad=0.9,
+            porosidad=0.15,  # Menos poros
             intensidad_cortical=(180, 220),
             intensidad_trabecular=(120, 160)
         ),
         
         TipoTejido.OSTEOPENIA: ParametrosTejido(
-            densidad_base=0.65,
-            rugosidad=0.5,
-            conectividad=0.6,
-            porosidad=0.4,
+            densidad_base=0.7,
+            rugosidad=0.4,
+            conectividad=0.7,
+            porosidad=0.35,  # Poros intermedios
             intensidad_cortical=(150, 190),
             intensidad_trabecular=(90, 130)
         ),
         
         TipoTejido.OSTEOPOROSIS: ParametrosTejido(
-            densidad_base=0.4,
-            rugosidad=0.7,
-            conectividad=0.3,
-            porosidad=0.6,
+            densidad_base=0.5,
+            rugosidad=0.6,
+            conectividad=0.4,
+            porosidad=0.55,  # Más poros y más grandes
             intensidad_cortical=(120, 160),
             intensidad_trabecular=(60, 100)
         )
@@ -123,51 +117,99 @@ def generar_patron_trabecular(width: int, height: int,
                              parametros: ParametrosTejido,
                              seed: Optional[int] = None) -> np.ndarray:
     """
-    Genera un patrón trabecular basado en los parámetros del tejido.
-    
-    Args:
-        width, height: Dimensiones de la imagen
-        parametros: Parámetros específicos del tipo de tejido
-        seed: Semilla para reproducibilidad
-        
-    Returns:
-        Array 2D representando el patrón trabecular
+    Genera un patrón trabecular con poros circulares no superpuestos.
     """
-    # Generar textura base con ruido Perlin
-    textura_base = generar_ruido_perlin_2d(
-        width, height, 
-        scale=0.05 + parametros.rugosidad * 0.1,
-        octaves=4,
-        persistence=0.5,
+    if seed is not None:
+        np.random.seed(seed)
+    
+    # Calcular tamaño máximo de poro basado en dimensiones
+    dimension_min = min(width, height)
+    
+    # Ajustar tamaños para dimensiones pequeñas
+    if dimension_min < 50:
+        tamano_max_poro = max(3, int(dimension_min * 0.2))  # 20% para imágenes pequeñas
+        tamano_min_poro = max(2, int(dimension_min * 0.1))  # 10% para imágenes pequeñas
+    else:
+        tamano_max_poro = int(dimension_min * 0.15)  # 15% de la dimensión menor
+        tamano_min_poro = max(3, int(dimension_min * 0.02))  # 2% de la dimensión menor
+    
+    # Asegurar que min < max
+    if tamano_min_poro >= tamano_max_poro:
+        tamano_min_poro = max(2, tamano_max_poro - 1)
+    
+    # Resto del código igual...
+    patron = np.ones((height, width))
+    poros_existentes = []
+    
+    # Ajustar área objetivo para imágenes pequeñas
+    area_total = width * height
+    factor_area = min(1.0, dimension_min / 100.0)  # Reducir área objetivo para imágenes pequeñas
+    area_objetivo = area_total * parametros.porosidad * factor_area
+    area_actual = 0
+    max_intentos = 1000
+    intentos = 0
+    
+    # Crear grid de coordenadas para cálculos
+    y, x = np.ogrid[:height, :width]
+    
+    while area_actual < area_objetivo and intentos < max_intentos:
+        # Usar uniform en lugar de randint para más control
+        radio = np.random.uniform(tamano_min_poro, tamano_max_poro)
+        radio = int(radio)
+        
+        # Asegurar que el radio es válido
+        if radio < 2:
+            radio = 2
+            
+        # Asegurar que el centro es válido
+        margen = radio + 1
+        if width <= 2*margen or height <= 2*margen:
+            break
+            
+        cx = np.random.randint(margen, width - margen)
+        cy = np.random.randint(margen, height - margen)
+        
+        # Verificar superposición con poros existentes
+        superpuesto = False
+        for px, py, pr in poros_existentes:
+            distancia = np.sqrt((cx - px)**2 + (cy - py)**2)
+            if distancia < (radio + pr + 2):  # +2 para dejar espacio entre poros
+                superpuesto = True
+                break
+        
+        if not superpuesto:
+            # Crear y aplicar el nuevo poro
+            distancia = np.sqrt((x - cx)**2 + (y - cy)**2)
+            mascara = distancia <= radio
+            
+            # Crear borde suave
+            factor_suavizado = np.clip(1 - (distancia / radio), 0, 1)
+            patron[mascara] *= factor_suavizado[mascara]
+            
+            # Registrar el poro
+            poros_existentes.append((cx, cy, radio))
+            area_actual += np.pi * radio**2
+        
+        intentos += 1
+    
+    # Ajustar densidad según conectividad
+    patron = patron * (parametros.conectividad * 0.5 + 0.5)
+    
+    # Aplicar ruido sutil para textura
+    ruido = generar_ruido_perlin_2d(
+        width, height,
+        scale=0.15,
+        octaves=2,
+        persistence=0.3,
         lacunarity=2.0,
         seed=seed
     )
     
-    # Aplicar densidad base
-    patron = textura_base * parametros.densidad_base
+    # Combinar patrón con ruido de manera más sutil
+    patron = patron * (0.95 + 0.05 * ruido)
     
-    # Simular conectividad trabecular
-    conectividad_mask = generar_ruido_perlin_2d(
-        width, height, 
-        scale=0.02,
-        octaves=2,
-        seed=seed + 1 if seed else None
-    )
-    
-    # Áreas bien conectadas mantienen más densidad
-    patron = patron * (0.5 + 0.5 * conectividad_mask * parametros.conectividad)
-    
-    # Simular porosidad (espacios vacíos)
-    porosidad_mask = generar_ruido_perlin_2d(
-        width, height,
-        scale=0.08,
-        octaves=3,
-        seed=seed + 2 if seed else None
-    )
-    
-    # Crear poros donde la máscara supera el umbral
-    umbral_poros = 1.0 - parametros.porosidad
-    patron = np.where(porosidad_mask > umbral_poros, patron * 0.1, patron)
+    # Normalizar
+    patron = (patron - patron.min()) / (patron.max() - patron.min())
     
     return patron
 

@@ -3,8 +3,6 @@ from tkinter import ttk, filedialog, messagebox
 import numpy as np
 import cv2
 from PIL import Image, ImageTk
-import os
-import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
